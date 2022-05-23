@@ -23,7 +23,7 @@ from collections import OrderedDict
 
 # DOMAIN
 # choose the modeling domain
-domain = 'WY'
+domain = 'MT'
 
 # PATHS
 dataPath = '/nfs/attic/dfh/Aragon2/CSOdmn/'+domain+'/'
@@ -32,14 +32,14 @@ dem_path = dataPath + 'DEM_'+domain+'.tif'
 #path to landcover .tif
 lc_path = dataPath + 'NLCD2016_'+domain+'.tif'
 #path to SnowModel
-SMpath = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/wy_snowmodel/'
+SMpath = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/mt_snowmodel/'
 
 # TIME
 # choose if want to set 'manual' or 'auto' date 
 date_flag = 'manual'
 # If you choose 'manual' set your dates below  
 st_dt = '2021-10-01'
-ed_dt = '2022-04-24'
+ed_dt = '2022-04-27'
 
 # ASSIM OPTIONS
 # select the data source to be assimilated

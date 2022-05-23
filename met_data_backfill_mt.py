@@ -30,13 +30,13 @@ ee.Initialize()
 #########################################################################
 # PATHS
 # path to temporary folder to store tif files from gee
-TIFpath = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/get_met_data/GEE_Downloads_wy_backfill/'
+TIFpath = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/get_met_data/GEE_Downloads_mt_backfill/'
 # path to where you want your output met .dat fime
-OUTpath = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/wy_snowmodel/met/mm_wy.dat'
+OUTpath = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/mt_snowmodel/met/mm_mt.dat'
 
 # DOMAIN
 # choose the modeling domain
-domain = 'WY'
+domain = 'MT'
 
 # TIME
 # choose if want to set 'manual' or 'auto' date 
@@ -45,7 +45,7 @@ date_flag = 'manual'
 # This will start on the 'begin' date at 0:00 and the last iteration will 
 # be on the day before the 'end' date below.
 st_dt = '2021-10-01'
-ed_dt = '2022-04-24'
+ed_dt = '2022-04-27'
 #########################################################################
 
 
@@ -92,7 +92,7 @@ def get_cfsv2(domain, TIFpath, stdt, eddt):
 
     '''
     // These are the min and max corners of your domain in Lat, Long
-    // Western Wyoming
+    // MT
     // Input the minimum lat, lower left corner
     '''
     minLat = domains[domain]['Bbox']['latmin']
@@ -164,7 +164,7 @@ def missing_slice_check(stdt, eddt, TIFpath):
 
     # check for to see if all time slices downloaded from GEE
     if len(timesin) != len(gee_times):
-    #### on 4/16 Nina edited code to print all missing timeslices
+        #### on 4/16 Nina edited code to print all missing timeslices
         print('gee is missing timeslice(s):\n',timesin[~timesin.isin(gee_times)].values)
         
         # if 4 or more consecutive timeslices are missing - quit the function
@@ -173,7 +173,7 @@ def missing_slice_check(stdt, eddt, TIFpath):
             time_delta = gee_times[i+1] - gee_times[i]
             duration.append(time_delta.total_seconds()/60/60)
         if max(duration) >= 48:    
-            print('at least two full days of met data are missing - quitting function')
+            print('at least one full day of met data is missing - quitting function')
 
         # if there are less than 4 missing consecutive time slices 
         # repeat the met data from the last valid time slice 
@@ -181,7 +181,7 @@ def missing_slice_check(stdt, eddt, TIFpath):
             missing_idx = np.where(~timesin.isin(gee_times))
             missing_dt = timesin[missing_idx]
             for j in range(len(missing_dt)):
-            	### on 4/26/22 - Nina added np.squeeze to fix dimensionality error in lines 
+                ### on 4/26/22 - Nina added np.squeeze to fix dimensionality error in lines 
             	### 185, and 188-191
                 if np.squeeze(missing_idx)[j] == 0:
                     print('choose earlier start date so missing time slices can be filled in')

@@ -30,22 +30,22 @@ ee.Initialize()
 #########################################################################
 # PATHS
 # path to temporary folder to store tif files from gee
-TIFpath = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/get_met_data/GEE_Downloads_wy_backfill/'
+TIFpath = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/get_met_data/GEE_Downloads_mt/'
 # path to where you want your output met .dat fime
-OUTpath = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/wy_snowmodel/met/mm_wy.dat'
+OUTpath = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/mt_snowmodel/met/mm_mt.dat'
 
 # DOMAIN
 # choose the modeling domain
-domain = 'WY'
+domain = 'MT'
 
 # TIME
 # choose if want to set 'manual' or 'auto' date 
-date_flag = 'manual'
+date_flag = 'auto'
 # If you choose 'manual' set your dates below  
 # This will start on the 'begin' date at 0:00 and the last iteration will 
 # be on the day before the 'end' date below.
-st_dt = '2021-10-01'
-ed_dt = '2022-04-24'
+st_dt = '2020-10-01'
+ed_dt = '2021-09-30'
 #########################################################################
 
 
@@ -92,7 +92,7 @@ def get_cfsv2(domain, TIFpath, stdt, eddt):
 
     '''
     // These are the min and max corners of your domain in Lat, Long
-    // Western Wyoming
+    // wa sq pass
     // Input the minimum lat, lower left corner
     '''
     minLat = domains[domain]['Bbox']['latmin']

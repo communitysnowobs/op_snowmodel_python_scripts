@@ -164,15 +164,16 @@ def missing_slice_check(stdt, eddt, TIFpath):
 
     # check for to see if all time slices downloaded from GEE
     if len(timesin) != len(gee_times):
-        print('gee is missing timeslice(s):\n',timesin[~timesin.isin(gee_times)].values[0])
+    #### on 4/16 Nina edited code to print all missing timeslices
+        print('gee is missing timeslice(s):\n',timesin[~timesin.isin(gee_times)].values)
         
         # if 4 or more consecutive timeslices are missing - quit the function
         duration = []
         for i in range(len(gee_times)-1):
             time_delta = gee_times[i+1] - gee_times[i]
             duration.append(time_delta.total_seconds()/60/60)
-        if max(duration) >= 24:    
-            print('at least one full day of met data is missing - quitting function')
+        if max(duration) >= 48:    
+            print('at least two full days of met data are missing - quitting function')
 
         # if there are less than 4 missing consecutive time slices 
         # repeat the met data from the last valid time slice 
@@ -180,14 +181,15 @@ def missing_slice_check(stdt, eddt, TIFpath):
             missing_idx = np.where(~timesin.isin(gee_times))
             missing_dt = timesin[missing_idx]
             for j in range(len(missing_dt)):
-                if missing_idx[j] == 0:
+            	### on 4/26/22 - Nina added np.squeeze to fix dimensionality error in lines 
+            	### 185, and 188-191
+                if np.squeeze(missing_idx)[j] == 0:
                     print('choose earlier start date so missing time slices can be filled in')
                 else:
-                    pre_dt = TIFpath+timesin[missing_idx[j]-1].strftime('%Y%m%d%H')[0]+'.tif'
-                    mis_dt = TIFpath+timesin[missing_idx[j]].strftime('%Y%m%d%H')[0]+'.tif' 
+                    pre_dt=TIFpath+timesin[np.squeeze(missing_idx)[j]-1].strftime('%Y%m%d%H')+'.tif'
+                    mis_dt = TIFpath+timesin[np.squeeze(missing_idx)[j]].strftime('%Y%m%d%H')+'.tif' 
                     get_ipython().system('cp $pre_dt $mis_dt')
-                    print('replaced', timesin[missing_idx[j]].strftime('%Y%m%d%H')[0],' with ', timesin[missing_idx[j]-1].strftime('%Y%m%d%H')[0])
-
+                    print('replaced', timesin[np.squeeze(missing_idx)[j]].strftime('%Y%m%d%H'),' with ', timesin[np.squeeze(missing_idx)[j]-1].strftime('%Y%m%d%H'))
 
 # In[25]:
 
