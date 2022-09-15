@@ -32,7 +32,7 @@ ee.Initialize()
 # path to temporary folder to store tif files from gee
 TIFpath = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/get_met_data/GEE_Downloads_ak_backfill/'
 # path to where you want your output met .dat fime
-OUTpath = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/wy_snowmodel/met/mm_ak.dat'
+OUTpath = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/ak_snowmodel/met/mm_ak.dat'
 
 # DOMAIN
 # choose the modeling domain
@@ -45,7 +45,7 @@ date_flag = 'manual'
 # This will start on the 'begin' date at 0:00 and the last iteration will 
 # be on the day before the 'end' date below.
 st_dt = '2021-10-01'
-ed_dt = '2022-04-01'
+ed_dt = '2022-08-31'
 #########################################################################
 
 

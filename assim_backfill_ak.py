@@ -39,7 +39,7 @@ SMpath = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/ak_snowmodel/'
 date_flag = 'manual'
 # If you choose 'manual' set your dates below  
 st_dt = '2021-10-01'
-ed_dt = '2022-04-01'
+ed_dt = '2022-08-31'
 
 # ASSIM OPTIONS
 # select the data source to be assimilated
@@ -153,29 +153,31 @@ def get_cso(st, ed, domain):
 
 
 # QA/QC function for CSO data
+# NOTE --> edits by dave to essentially disable this since snodas not avail in in AK.
 def qaqc_iqr(csodf):
     print('Performing qa/qc on CSO data using IQR method')
     clim_dir = '/nfs/attic/dfh/data/snodas/snodas_tif/clim/'
     iqr_flag = []
-    for i in range(len(csodf)):
-        # get cso snow depth
-        csohs = csodf.H[i]
-        # get date
-        dates = pd.to_datetime(csodf.timestamp[i], format='%Y-%m-%dT%H:%M:%S')
+    #for i in range(len(csodf)):
+    #    # get cso snow depth
+    #    csohs = csodf.H[i]
+    #    # get date
+    #    dates = pd.to_datetime(csodf.timestamp[i], format='%Y-%m-%dT%H:%M:%S')
 
-        # define path names for 1st and 3rd doy quantiles
-        q1_Fname = clim_dir+dates.strftime("%m")+dates.strftime("%d")+'1036q1.tif'
-        q3_Fname = clim_dir+dates.strftime("%m")+dates.strftime("%d")+'1036q3.tif'
+    #    # define path names for 1st and 3rd doy quantiles
+    #    q1_Fname = clim_dir+dates.strftime("%m")+dates.strftime("%d")+'1036q1.tif'
+    #    q3_Fname = clim_dir+dates.strftime("%m")+dates.strftime("%d")+'1036q3.tif'
 
-        q1 = point_query([csodf.geometry[i]], q1_Fname)[0]
-        q3 = point_query([csodf.geometry[i]], q3_Fname)[0]
-        IQR = q3-q1
-        # False = outlier
-        iqr_flag.append((csohs > (q1-1.5*IQR)) & (csohs < (q3+1.5*IQR)))
+    #    q1 = point_query([csodf.geometry[i]], q1_Fname)[0]
+    #    q3 = point_query([csodf.geometry[i]], q3_Fname)[0]
+    #    IQR = q3-q1
+    #    # False = outlier
+    #    iqr_flag.append((csohs > (q1-1.5*IQR)) & (csohs < (q3+1.5*IQR)))
 
-    csodf['iqr_flag'] = iqr_flag
-    csodf_clean = csodf.loc[csodf['iqr_flag'] == True]
-    csodf_clean = csodf_clean.reset_index(drop=True)
+    #csodf['iqr_flag'] = iqr_flag
+    #csodf_clean = csodf.loc[csodf['iqr_flag'] == True]
+    #csodf_clean = csodf_clean.reset_index(drop=True)
+    csodf_clean = csodf
     return csodf_clean
 
 #########################################################################
