@@ -44,7 +44,7 @@ ed_dt = '2022-08-31'
 # ASSIM OPTIONS
 # select the data source to be assimilated
 # can be set to 'none','cso', 'both' or 'snotel'
-assim_mod = 'both'
+assim_mod = 'snotel'
 print(assim_mod)
 #########################################################################
 
