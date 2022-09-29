@@ -44,7 +44,7 @@ ed_dt = '2019-01-05'
 # ASSIM OPTIONS
 # select the data source to be assimilated
 # can be set to 'none','cso', 'both' or 'snotel'
-assim_mod = 'snotel'
+assim_mod = 'both'
 print(assim_mod)
 #########################################################################
 
@@ -85,6 +85,18 @@ def swe_calc(gdf):
     TD = np.array([point_query([val], '/nfs/attic/dfh/data/depth2swe/td_final.txt')[0] for val in gdf.geometry])
     #Get pr info at each point
     PPTWT = np.array([point_query([val], '/nfs/attic/dfh/data/depth2swe/ppt_wt_final.txt')[0] for val in gdf.geometry])
+    
+    #lines 90 - 97 added Sep 2022 by Aragon in order to screen out invalid points
+    # remove records with no climtaological data 
+    print(sum(np.isnan(TD.astype(float))), 'cso point(s) do not have climatological data to calculate swe')
+    print(f'removing these records:\n',gdf[np.isnan(TD.astype(float))])
+    gdf = gdf[~np.isnan(TD.astype(float))]
+    gdff = gdf.reset_index(drop=True)
+    H = H[~np.isnan(TD.astype(float))]
+    PPTWT = PPTWT[~np.isnan(TD.astype(float))]
+    TD = TD[~np.isnan(TD.astype(float))]
+    #lines 90 - 97 added Sep 2022 by Aragon in order to screen out invalid points
+    
     #Determine day of year
     dates = pd.to_datetime(gdf.timestamp, format='%Y-%m-%dT%H:%M:%S').dt.date.values
     DOY = [date.toordinal(date(dts.year,dts.month,dts.day))-date.toordinal(date(dts.year,9,30)) for dts in dates]
@@ -153,31 +165,29 @@ def get_cso(st, ed, domain):
 
 
 # QA/QC function for CSO data
-# NOTE --> edits by dave to essentially disable this since snodas not avail in in AK.
 def qaqc_iqr(csodf):
     print('Performing qa/qc on CSO data using IQR method')
     clim_dir = '/nfs/attic/dfh/data/snodas/snodas_tif/clim/'
     iqr_flag = []
-    #for i in range(len(csodf)):
-    #    # get cso snow depth
-    #    csohs = csodf.H[i]
-    #    # get date
-    #    dates = pd.to_datetime(csodf.timestamp[i], format='%Y-%m-%dT%H:%M:%S')
+    for i in range(len(csodf)):
+        # get cso snow depth
+        csohs = csodf.H[i]
+        # get date
+        dates = pd.to_datetime(csodf.timestamp[i], format='%Y-%m-%dT%H:%M:%S')
 
-    #    # define path names for 1st and 3rd doy quantiles
-    #    q1_Fname = clim_dir+dates.strftime("%m")+dates.strftime("%d")+'1036q1.tif'
-    #    q3_Fname = clim_dir+dates.strftime("%m")+dates.strftime("%d")+'1036q3.tif'
+        # define path names for 1st and 3rd doy quantiles
+        q1_Fname = clim_dir+dates.strftime("%m")+dates.strftime("%d")+'1036q1.tif'
+        q3_Fname = clim_dir+dates.strftime("%m")+dates.strftime("%d")+'1036q3.tif'
 
-    #    q1 = point_query([csodf.geometry[i]], q1_Fname)[0]
-    #    q3 = point_query([csodf.geometry[i]], q3_Fname)[0]
-    #    IQR = q3-q1
+        q1 = point_query([csodf.geometry[i]], q1_Fname)[0]
+        q3 = point_query([csodf.geometry[i]], q3_Fname)[0]
+        IQR = q3-q1
         # False = outlier
-    #    iqr_flag.append((csohs > (q1-1.5*IQR)) & (csohs < (q3+1.5*IQR)))
+        iqr_flag.append((csohs > (q1-1.5*IQR)) & (csohs < (q3+1.5*IQR)))
 
-    #csodf['iqr_flag'] = iqr_flag
-    #csodf_clean = csodf.loc[csodf['iqr_flag'] == True]
-    #csodf_clean = csodf_clean.reset_index(drop=True)
-    csodf_clean = csodf
+    csodf['iqr_flag'] = iqr_flag
+    csodf_clean = csodf.loc[csodf['iqr_flag'] == True]
+    csodf_clean = csodf_clean.reset_index(drop=True)
     return csodf_clean
 
 #########################################################################
@@ -525,7 +535,13 @@ elif assim_mod == 'cso':
     else:    
         print('Creating assim input file using CSO observations')
         replace_line(parFile,35,'1			!irun_data_assim - 0 for straight run; 1 for assim run\n')
-        CSOgdf_clean = qaqc_iqr(CSOgdf)
+        
+        #comment out call to qaqc and just use data as is since snodas does not work in AK
+        #change as per Aragon suggestion Sep 2022
+        #CSOgdf_clean = qaqc_iqr(CSOgdf)
+        CSOgdf_clean = CSOgdf
+        #end change
+        
         make_SMassim_file(CSOgdf_clean,outFpath)
 #     #edit .inc file
     replace_line(incFile, 30, '      parameter (max_obs_dates='+str(len(CSOgdf_clean)+1)+')\n')
@@ -560,7 +576,13 @@ elif assim_mod == 'both':
     # set delta time 
     delta = 5
     if len(CSOgdf)>=1:
-        CSOgdf_clean = qaqc_iqr(CSOgdf)  
+        
+        #comment out call to qaqc and just use data as is since snodas does not work in AK
+        #change as per Aragon suggestion Sep 2022
+        #CSOgdf_clean = qaqc_iqr(CSOgdf)
+        CSOgdf_clean = CSOgdf
+        #end change
+ 
         CSOdata = CSOgdf_clean.sort_values(by='dt',ascending=True)
         CSOdata = CSOdata.reset_index(drop=True)
         newCSO = CSOdata

@@ -39,7 +39,7 @@ SMpath = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/st_snowmodel/'
 date_flag = 'manual'
 # If you choose 'manual' set your dates below  
 st_dt = '2021-10-01'
-ed_dt = '2022-09-17'
+ed_dt = '2022-09-15'
 
 # ASSIM OPTIONS
 # select the data source to be assimilated
