@@ -1,0 +1,235 @@
+#!/usr/bin/env python
+# coding: utf-8
+#this python script will pull nrcs Hs observations for desired days. It will create a shapefile
+#and save the data to a file.
+
+import geopandas as gpd
+import pandas as pd
+import numpy as np
+from datetime import datetime, timedelta, date
+import requests
+import json
+from geojson import Point, Feature, FeatureCollection, dump
+from rasterstats import point_query
+from shapely import geometry as sgeom
+import ulmo
+from collections import OrderedDict
+from pathlib import Path
+
+#########################################################################
+############################ USER INPUTS ################################
+#########################################################################
+
+#path for created shape files
+OUTpath = '/scratch/ms_shapefiles/'
+
+# TIME - note that fetched data will range from 12 am on st_dt to 12 am
+# on ed_dt
+# for now, I am only using manual option for a test.  
+#st_dt = '2022-10-01'
+#ed_dt = '2022-10-05'
+
+#stdt=st_dt
+#eddt=ed_dt
+#print(stdt, eddt)
+
+# TIME
+# choose if want to set 'manual' or 'auto' date 
+date_flag = 'manual'
+# If you choose 'manual' set your dates below  
+# This will start on the 'begin' date at 0:00 and the last iteration will 
+# be on the day before the 'end' date below.
+st_dt = '2022-01-01'
+ed_dt = '2022-01-05'
+#########################################################################
+
+# Date setup function
+def set_dates(st_dt,ed_dt,date_flag):
+    if date_flag == 'auto':
+        # ###automatically select date based on today's date 
+        hoy = date.today()
+        antes = timedelta(days = 2)
+        #start date 2 days before today's date
+        fecha = hoy - antes
+        stdt = fecha.strftime("%Y-%m-%d")
+        antes = timedelta(days = 1)
+        #end date 1 days before today's date
+        fecha = hoy - antes
+        eddt = fecha.strftime("%Y-%m-%d")
+    elif date_flag == 'manual':
+        stdt = st_dt
+        eddt = ed_dt
+    return stdt, eddt
+
+#########################################################################
+# SNOTEL Functions
+#########################################################################
+
+# functions to get SNOTEL stations as geodataframe
+def sites_asgdf(ulmo_getsites, stn_proj):
+    """ Convert ulmo.cuahsi.wof.get_sites response into a point GeoDataframe
+    """
+    
+    # Note: Found one SNOTEL site that was missing the location key
+    sites_df = pd.DataFrame.from_records([
+        OrderedDict(code=s['code'], 
+        longitude=float(s['location']['longitude']), 
+        latitude=float(s['location']['latitude']), 
+        name=s['name'], 
+        elevation_m=s['elevation_m'])
+        for _,s in ulmo_getsites.items()
+        if 'location' in s
+    ])
+
+    sites_gdf = gpd.GeoDataFrame(
+        sites_df, 
+        geometry=gpd.points_from_xy(sites_df['longitude'], sites_df['latitude']),
+        crs=stn_proj
+    )
+    return sites_gdf
+
+def get_snotel_stns():
+    
+    #path to CSO domains
+    domains_resp = requests.get("https://raw.githubusercontent.com/snowmodel-tools/preprocess_python/master/CSO_domains.json")
+    domains = domains_resp.json()
+    
+    #USA
+    #Bbox = {"latmax": 72, "latmin": 18, "lonmin": -172, "lonmax": -66}
+    Bbox = {"latmax": 44, "latmin": 43, "lonmin": -130, "lonmax": -120}
+    stn_proj = "epsg:4326"
+
+    # Convert the bounding box dictionary to a shapely Polygon geometry using sgeom.box
+    box_sgeom = sgeom.box(Bbox['lonmin'], Bbox['latmin'], Bbox['lonmax'], Bbox['latmax'])
+    box_gdf = gpd.GeoDataFrame(geometry=[box_sgeom], crs=stn_proj)
+    
+    # WaterML/WOF WSDL endpoint url 
+    wsdlurl = "https://hydroportal.cuahsi.org/Snotel/cuahsi_1_1.asmx?WSDL"
+
+    # get dictionary of snotel sites 
+    sites = ulmo.cuahsi.wof.get_sites(wsdlurl,user_cache=True)
+
+    #turn sites to geodataframe 
+    snotel_gdf = sites_asgdf(sites,stn_proj)
+    
+    #clip snotel sites to domain bounding box
+    gdf = gpd.sjoin(snotel_gdf, box_gdf, how="inner")
+    gdf.drop(columns='index_right', inplace=True)
+    gdf.reset_index(drop=True, inplace=True)
+
+    return gdf
+
+
+def fetch(sitecode, variablecode,start_date, end_date):
+    #print(sitecode, variablecode,start_date, end_date)
+    values_df = None
+    # WaterML/WOF WSDL endpoint url 
+    wsdlurl = "https://hydroportal.cuahsi.org/Snotel/cuahsi_1_1.asmx?WSDL"
+    network = 'SNOTEL:'
+
+    try:
+        #Request data from the server
+        site_values = ulmo.cuahsi.wof.get_values(
+            wsdlurl, network+sitecode, variablecode, start=start_date, end=end_date
+        )
+        #Convert to a Pandas DataFrame   
+        values_df = pd.DataFrame.from_dict(site_values['values'])
+        #Parse the datetime values to Pandas Timestamp objects
+        values_df['datetime'] = pd.to_datetime(values_df['datetime'])
+        #Set the DataFrame index to the Timestamps
+        values_df.set_index('datetime', inplace=True)
+        #Convert values to float and replace -9999 nodata values with NaN
+        values_df['value'] = pd.to_numeric(values_df['value']).replace(-9999, np.nan)
+        #Remove any records flagged with lower quality
+        values_df = values_df[values_df['quality_control_level_code'] == '1']
+    except:
+        print("Unable to fetch %s" % variablecode)
+    
+    return values_df
+
+
+# returns daily timeseries of snotel variables 
+# https://www.wcc.nrcs.usda.gov/web_service/AWDB_Web_Service_Reference.htm#commonlyUsedElementCodes
+# 'WTEQ': swe [in]
+# 'SNWD': snow depth [in]
+# 'PRCP': precipitation increment [in]
+# 'PREC': precipitation accumulation [in]
+# 'TAVG': average air temp [F]
+# 'TMIN': minimum air temp [F]
+# 'TMAX': maximum air temp [F]
+# 'TOBS': observered air temp [F]
+def get_snotel_data(gdf,sddt, eddt,var,units='metric'):
+    '''
+    gdf - pandas geodataframe of SNOTEL sites
+    st_dt - start date string 'yyyy-mm-dd'
+    ed_dt - end date string 'yyyy-mm-dd'
+    var - snotel variable of interest 
+    units - 'metric' (default) or 'imperial'
+    '''
+    stn_data = pd.DataFrame(index=pd.date_range(start=stdt, end=eddt))
+    network = 'SNOTEL:'    
+
+    for sitecode in gdf.code:
+        try:
+            data = fetch(sitecode,network+var+'_D', start_date=stdt, end_date=eddt)
+            #check for nan values
+            if len(data.value[np.isnan(data.value)]) > 0:
+                #check if more than 10% of data is missing
+                if len(data.value[np.isnan(data.value)])/len(data) > .02:
+                    print('More than 2% of days missing')
+                    gdf.drop(gdf.loc[gdf['code']==sitecode].index, inplace=True)
+                    continue
+            stn_data[sitecode] = data.value
+        except:
+            gdf.drop(gdf.loc[gdf['code']==sitecode].index, inplace=True)     
+    
+    gdf.reset_index(drop=True, inplace=True)
+    if units == 'metric':
+        for sitecode in gdf.code:
+            stn_data[sitecode] = 2.54 * stn_data[sitecode]
+
+    return gdf, stn_data
+
+##### run stuff
+#call the function to get dates
+stdt, eddt = set_dates(st_dt,ed_dt,date_flag)
+print(stdt, eddt)
+#get snotel stations
+snotel_gdf = get_snotel_stns()
+print('Retrieved station locations')
+print(snotel_gdf)    
+#get data
+SNOTELgdf, hs = get_snotel_data(snotel_gdf,stdt,eddt,'SNWD')
+print('Retrieved station data')
+print(SNOTELgdf)
+print(hs)
+temp=hs.T
+print(temp)
+
+
+#define name of output file. NOTE: I have decided to not create individual files for
+#every day. Instead, we will have a single file, and simply append to this each day
+#path_to_file=OUTpath+'csodata.shp'
+#path=Path(path_to_file)
+
+#below, we will only attempt to append data if the gdf is not empty (i.e., if new data exist)
+#if not CSOgdf.empty:
+	#reduce it down to keep only desired variables
+#	cols=['geometry','depth','Y','M','D']
+#	CSOgdf_subset=CSOgdf[cols]
+#	print(CSOgdf_subset)
+#	print('Data were found; write to file')
+	#next, we check to see if this file exists. The first time you call data, it won't.
+	#if it does exist, use append mode
+#	if path.is_file():
+#		print('File exists; appending data')
+		#CSOgdf_subset.to_file(path_to_file, mode='a')	
+	#if it does not exist use regular model
+#	else:
+#		print('File does not yet exist; write data to new file')
+		#CSOgdf_subset.to_file(path_to_file)
+#else:
+#	print('No measurements found')		
+		
+		
+		

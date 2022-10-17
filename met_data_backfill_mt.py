@@ -44,8 +44,8 @@ date_flag = 'manual'
 # If you choose 'manual' set your dates below  
 # This will start on the 'begin' date at 0:00 and the last iteration will 
 # be on the day before the 'end' date below.
-st_dt = '2021-10-01'
-ed_dt = '2022-04-27'
+st_dt = '2020-10-01'
+ed_dt = '2021-09-30'
 #########################################################################
 
 
