@@ -177,21 +177,29 @@ def missing_slice_check(stdt, eddt, TIFpath):
 
         # if there are less than 4 missing consecutive time slices 
         # repeat the met data from the last valid time slice 
-        else:
-            missing_idx = np.where(~timesin.isin(gee_times))
-            missing_dt = timesin[missing_idx]
-            for j in range(len(missing_dt)):
-            	### on 4/26/22 - Nina added np.squeeze to fix dimensionality error in lines 
-            	### 185, and 188-191
-                if np.squeeze(missing_idx)[j] == 0:
-                    print('choose earlier start date so missing time slices can be filled in')
-                else:
-                    pre_dt=TIFpath+timesin[np.squeeze(missing_idx)[j]-1].strftime('%Y%m%d%H')+'.tif'
-                    mis_dt = TIFpath+timesin[np.squeeze(missing_idx)[j]].strftime('%Y%m%d%H')+'.tif' 
-                    get_ipython().system('cp $pre_dt $mis_dt')
-                    print('replaced', timesin[np.squeeze(missing_idx)[j]].strftime('%Y%m%d%H'),' with ', timesin[np.squeeze(missing_idx)[j]-1].strftime('%Y%m%d%H'))
-
-# In[25]:
+        else:	
+            missing_idx = np.where(~timesin.isin(gee_times))	
+            missing_dt = timesin[missing_idx]	
+            if len(missing_dt)==1:	
+                if missing_idx == 0:	
+                    pre_dt=TIFpath+timesin[np.squeeze(missing_idx)+1].strftime('%Y%m%d%H')+'.tif'	
+                    mis_dt = TIFpath+timesin[np.squeeze(missing_idx)].strftime('%Y%m%d%H')+'.tif' 	
+                    get_ipython().system('cp $pre_dt $mis_dt')	
+                    print('replaced', timesin[np.squeeze(missing_idx)].strftime('%Y%m%d%H'),' with ', timesin[np.squeeze(missing_idx)-1].strftime('%Y%m%d%H'))	
+                else:	
+                    pre_dt=TIFpath+timesin[np.squeeze(missing_idx)-1].strftime('%Y%m%d%H')+'.tif'	
+                    mis_dt = TIFpath+timesin[np.squeeze(missing_idx)].strftime('%Y%m%d%H')+'.tif' 	
+                    get_ipython().system('cp $pre_dt $mis_dt')	
+                    print('replaced', timesin[np.squeeze(missing_idx)].strftime('%Y%m%d%H'),' with ', timesin[np.squeeze(missing_idx)-1].strftime('%Y%m%d%H'))	
+            else:	
+                for j in range(len(missing_dt)):	
+                    if np.squeeze(missing_idx)[j] == 0:	
+                        print('choose earlier start date so missing time slices can be filled in')	
+                    else:	
+                        pre_dt=TIFpath+timesin[np.squeeze(missing_idx)[j]-1].strftime('%Y%m%d%H')+'.tif'	
+                        mis_dt = TIFpath+timesin[np.squeeze(missing_idx)[j]].strftime('%Y%m%d%H')+'.tif' 	
+                        get_ipython().system('cp $pre_dt $mis_dt')	
+                        print('replaced', timesin[np.squeeze(missing_idx)[j]].strftime('%Y%m%d%H'),' with ', timesin[np.squeeze(missing_idx)[j]-1].strftime('%Y%m%d%H'))	
 
 
 # Format gee files for SnowModel function
