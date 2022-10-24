@@ -180,6 +180,8 @@ def missing_slice_check(stdt, eddt, TIFpath):
         else:
             missing_idx = np.where(~timesin.isin(gee_times))
             missing_dt = timesin[missing_idx]
+            print(missing_idx)
+            print(missing_dt)
             for j in range(len(missing_dt)):
             	### on 4/26/22 - Nina added np.squeeze to fix dimensionality error in lines 
             	### 185, and 188-191

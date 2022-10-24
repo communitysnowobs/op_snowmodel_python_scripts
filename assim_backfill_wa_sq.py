@@ -36,7 +36,7 @@ SMpath = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/wa_sq_snowmodel/'
 
 # TIME
 # choose if want to set 'manual' or 'auto' date 
-date_flag = 'manual'
+date_flag = 'auto'
 # If you choose 'manual' set your dates below  
 st_dt = '2021-10-01'
 ed_dt = '2022-04-24'
