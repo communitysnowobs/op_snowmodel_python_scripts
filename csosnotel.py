@@ -39,8 +39,8 @@ date_flag = 'auto'
 # If you choose 'manual' set your dates below  
 # This will start on the 'begin' date at 0:00 and the last iteration will 
 # be on the day before the 'end' date below.
-st_dt = '2022-10-01'
-ed_dt = '2022-10-05'
+st_dt = '2023-02-08'
+ed_dt = '2023-02-15'
 #########################################################################
 
 # Date setup function

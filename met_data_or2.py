@@ -3,7 +3,7 @@
 
 # In[1]:
 
-
+# this is a test file to see if we can reduce latency by a day. 11/23/2022
 #https://github.com/giswqs/geemap/blob/master/examples/notebooks/11_export_image.ipynb
 import ee
 import geemap
@@ -30,13 +30,13 @@ ee.Initialize()
 #########################################################################
 # PATHS
 # path to temporary folder to store tif files from gee
-TIFpath = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/get_met_data/GEE_Downloads_mt/'
+TIFpath = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/get_met_data/GEE_Downloads_or/'
 # path to where you want your output met .dat fime
-OUTpath = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/mt_snowmodel/met/mm_mt.dat'
+OUTpath = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/or_snowmodel/met/mm_or.dat'
 
 # DOMAIN
 # choose the modeling domain
-domain = 'MT'
+domain = 'OR'
 
 # TIME
 # choose if want to set 'manual' or 'auto' date 
@@ -57,11 +57,13 @@ def set_dates(st_dt,ed_dt,date_flag):
     if date_flag == 'auto':
         # ###automatically select date based on today's date 
         hoy = date.today()
+        #in line below change from 2 to 1? 11/23/2022
         antes = timedelta(days = 1)
         #end date 3 days before today's date
         fecha = hoy - antes
         eddt = fecha.strftime("%Y-%m-%d") 
         #whole water year
+        #change the 3 to 2? 11/23/2022
         if (hoy.month == 10) & (hoy.day == 2):
             eddt = fecha.strftime("%Y-%m-%d") 
             stdt = str(hoy.year - 1)+'-10-01'
@@ -92,7 +94,7 @@ def get_cfsv2(domain, TIFpath, stdt, eddt):
 
     '''
     // These are the min and max corners of your domain in Lat, Long
-    // wa sq pass
+    // Western Wyoming
     // Input the minimum lat, lower left corner
     '''
     minLat = domains[domain]['Bbox']['latmin']

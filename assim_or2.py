@@ -20,10 +20,10 @@ from collections import OrderedDict
 #########################################################################
 # NOTE: to runn assim, set irun_data_assim = 1 in .par file
 
-
+# test change to see if we can cut latency by a day. 11/23/2022
 # DOMAIN
 # choose the modeling domain
-domain = 'WY'
+domain = 'OR'
 
 # PATHS
 dataPath = '/nfs/attic/dfh/Aragon2/CSOdmn/'+domain+'/'
@@ -32,7 +32,7 @@ dem_path = dataPath + 'DEM_'+domain+'.tif'
 #path to landcover .tif
 lc_path = dataPath + 'NLCD2016_'+domain+'.tif'
 #path to SnowModel
-SMpath = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/wy_snowmodel/'
+SMpath = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/or_snowmodel/'
 
 # TIME
 # choose if want to set 'manual' or 'auto' date 
@@ -53,11 +53,13 @@ def set_dates(st_dt,ed_dt,date_flag):
     if date_flag == 'auto':
         # ###automatically select date based on today's date 
         hoy = date.today()
+        #change the 3 to 2? 11/23/2022
         antes = timedelta(days = 2)
-        #end date 3 days before today's date
+        #end date 2 days before today's date
         fecha = hoy - antes
         eddt = fecha.strftime("%Y-%m-%d")  
         #whole water year
+        #change the 3 to 2? 11/23/2022
         if (hoy.month == 10) & (hoy.day == 2):
             eddt = fecha.strftime("%Y-%m-%d")
             stdt = str(hoy.year - 1)+'-10-01'

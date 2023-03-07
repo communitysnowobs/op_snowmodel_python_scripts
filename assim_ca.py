@@ -53,12 +53,12 @@ def set_dates(st_dt,ed_dt,date_flag):
     if date_flag == 'auto':
         # ###automatically select date based on today's date 
         hoy = date.today()
-        antes = timedelta(days = 3)
+        antes = timedelta(days = 2)
         #end date 3 days before today's date
         fecha = hoy - antes
         eddt = fecha.strftime("%Y-%m-%d")  
         #whole water year
-        if (hoy.month == 10) & (hoy.day == 3):
+        if (hoy.month == 10) & (hoy.day == 2):
             eddt = fecha.strftime("%Y-%m-%d")
             stdt = str(hoy.year - 1)+'-10-01'
         #start dates

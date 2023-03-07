@@ -3,7 +3,7 @@
 
 # In[1]:
 
-
+# this is a test file to see if we can reduce latency by a day. 11/23/2022
 #https://github.com/giswqs/geemap/blob/master/examples/notebooks/11_export_image.ipynb
 import ee
 import geemap
@@ -30,13 +30,14 @@ ee.Initialize()
 #########################################################################
 # PATHS
 # path to temporary folder to store tif files from gee
-TIFpath = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/get_met_data/GEE_Downloads_mt/'
+TIFpath = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/get_met_data/GEE_Downloads_or/'
+TIFpath2 = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/get_met_data/GEE_Downloads_or_gfs/'
 # path to where you want your output met .dat fime
-OUTpath = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/mt_snowmodel/met/mm_mt.dat'
+OUTpath = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/or_snowmodel/met/mm_or_test.dat'
 
 # DOMAIN
 # choose the modeling domain
-domain = 'MT'
+domain = 'OR'
 
 # TIME
 # choose if want to set 'manual' or 'auto' date 
@@ -44,8 +45,8 @@ date_flag = 'auto'
 # If you choose 'manual' set your dates below  
 # This will start on the 'begin' date at 0:00 and the last iteration will 
 # be on the day before the 'end' date below.
-st_dt = '2020-10-01'
-ed_dt = '2021-09-30'
+st_dt = '2023-02-10'
+ed_dt = '2023-02-15'
 #########################################################################
 
 
@@ -57,19 +58,23 @@ def set_dates(st_dt,ed_dt,date_flag):
     if date_flag == 'auto':
         # ###automatically select date based on today's date 
         hoy = date.today()
+        #in line below change from 2 to 1? 11/23/2022
         antes = timedelta(days = 1)
         #end date 3 days before today's date
         fecha = hoy - antes
         eddt = fecha.strftime("%Y-%m-%d") 
         #whole water year
+        #change the 3 to 2? 11/23/2022
         if (hoy.month == 10) & (hoy.day == 2):
             eddt = fecha.strftime("%Y-%m-%d") 
             stdt = str(hoy.year - 1)+'-10-01'
         #start dates
         elif fecha.month <10:
             stdt = str(fecha.year - 1)+'-10-01'
+            stdt='2023-02-15' #temp addition (Feb 16 2023). Delete when done testing
         else:
             stdt = str(fecha.year)+'-10-01'
+            stdt='2023-02-15' #temp addition (Feb 16 2023). Delete when done testing
     elif date_flag == 'manual':
         stdt = st_dt
         # add one day to end date because GEE ends on date before last date
@@ -92,7 +97,7 @@ def get_cfsv2(domain, TIFpath, stdt, eddt):
 
     '''
     // These are the min and max corners of your domain in Lat, Long
-    // wa sq pass
+    // Western Wyoming
     // Input the minimum lat, lower left corner
     '''
     minLat = domains[domain]['Bbox']['latmin']
@@ -114,37 +119,61 @@ def get_cfsv2(domain, TIFpath, stdt, eddt):
     #// Input the max Long, upper right corner
     maxLongMET = (maxLong + 0.5);
 
-    # This resolution for the NLCD and DEM outputs for the SnowModel domain in meters
-    sm_resolution = 100
-
-    '''// Resolution for the PRISM output. This shoud change by Latitude of the domain
-    // because the PRISM product spatial resolution is 2.5 minutes, which equals 150 arc seconds.
-    // You can use this arc-second calculator to estimate the correct value for the PRISM resolution by latitude
-    // https://opendem.info/arc2meters.html
-    // This is one arc-second in meters for 43 degrees N Latitude'''
-    one_arcsecond = 22.57
-    PRISM_resolution = one_arcsecond * 150
-
     '''// Define the final output projection using EPSG codes'''
     epsg_code = domains[domain]['mod_proj']
-
-    #// Name the DEM output
-    dem_name = 'DEM'
-    #// Name the Land Cover output
-    lc_name = 'NLCD2016'
 
     my_domain = ee.Geometry.Rectangle(**{'coords':[minLong,minLat,maxLong,maxLat],'proj': 'EPSG:4326','geodesic':True,});
     my_domain_met = ee.Geometry.Rectangle([minLongMET,minLatMET,maxLongMET,maxLatMET])
     
     # download reanalysis data
     cfsv2 = ee.ImageCollection('NOAA/CFSV2/FOR6H')         .filterBounds(my_domain_met)         .filter(ee.Filter.date(stdt,eddt))
-
     data = cfsv2.select('Temperature_height_above_ground',         'Geopotential_height_surface',         'u-component_of_wind_height_above_ground',         'v-component_of_wind_height_above_ground',         'Pressure_surface',         'Specific_humidity_height_above_ground',         'Precipitation_rate_surface_6_Hour_Average')
     with contextlib.redirect_stdout(None):
         geemap.ee_export_image_collection(data, out_dir=TIFpath,region=my_domain_met,scale=22200,crs=epsg_code)
+    #print(data)
 
-# In[21]:
+# Download GFS met data function
+def get_gfs(domain, TIFpath2, stdt2, eddt2):
+    
+    #create directory with initiation date for ensemble if it doesn't exist
+    get_ipython().system('mkdir -p $TIFpath2')
 
+    #path to CSO domains
+    domains_resp = requests.get("https://raw.githubusercontent.com/snowmodel-tools/preprocess_python/master/CSO_domains.json")
+    domains = domains_resp.json()
+
+    minLat = domains[domain]['Bbox']['latmin']
+    #// Input the minimum long, lower left corner
+    minLong = domains[domain]['Bbox']['lonmin']
+    #// Input the max lat, upper right corner
+    maxLat = domains[domain]['Bbox']['latmax']
+    #// Input the max Long, upper right corner
+    maxLong = domains[domain]['Bbox']['lonmax']
+
+    #/ These are the min and max corners of your reanalysis in Lat, Long (create a slightly larger box)
+    #// Input the minimum lat, lower left corner
+    minLatMET = (minLat - 0.25);
+    #// print(minLat2);
+    #// Input the minimum long, lower left corner
+    minLongMET = (minLong - 0.5);
+    #// Input the max lat, upper right corner
+    maxLatMET = (maxLat + 0.25);
+    #// Input the max Long, upper right corner
+    maxLongMET = (maxLong + 0.5);
+
+    '''// Define the final output projection using EPSG codes'''
+    epsg_code = domains[domain]['mod_proj']
+
+    my_domain = ee.Geometry.Rectangle(**{'coords':[minLong,minLat,maxLong,maxLat],'proj': 'EPSG:4326','geodesic':True,});
+    my_domain_met = ee.Geometry.Rectangle([minLongMET,minLatMET,maxLongMET,maxLatMET])
+    
+    # download reanalysis data
+    gfs = ee.ImageCollection('NOAA/GFS0P25').filterBounds(my_domain_met).filter(ee.Filter.date(stdt2,eddt2)).filter(ee.Filter.lte('forecast_hours',72))
+    data2 = gfs.select('temperature_2m_above_ground', 'u_component_of_wind_10m_above_ground', 'v_component_of_wind_10m_above_ground',     'relative_humidity_2m_above_ground',         'total_precipitation_surface')
+    #with contextlib.redirect_stdout(None):
+        geemap.ee_export_image_collection(data2, out_dir=TIFpath2,region=my_domain_met,scale=22200,crs=epsg_code)
+    #print(gfs)
+    #print(data2)
 
 # function to check for missing dates
 def missing_slice_check(stdt, eddt, TIFpath):
@@ -333,34 +362,48 @@ def MET2SM(TIFpath, OUTpath, stdt, eddt):
 # In[13]:
 
 
-# set time parameters
+# set time parameters for CFS2
 stdt, eddt = set_dates(st_dt,ed_dt,date_flag)
+print(stdt)
+print(eddt)
+
+# set time parameters for GFS. This will grab three additional days of forecast
+stdt_tmp=(datetime.strptime(eddt,'%Y-%m-%d')+timedelta(days=0)).strftime('%Y-%m-%d')
+# append string to help narrow down 
+stdt2=stdt_tmp + 'T00:00:00Z'
+eddt2=stdt_tmp + 'T00:06:00Z' #this will end up grabbing 384 hours of forecast (too much; will filter later)
+#eddt2=(datetime.strptime(eddt,'%Y-%m-%d')+timedelta(days=3)).strftime('%Y-%m-%d')
+print(stdt2)
+print(eddt2)
 
 
 # In[17]:
 
 
-# download GEE data
+# download GEE data for CFS
 get_cfsv2(domain, TIFpath, stdt, eddt)
+
+# download GEE data for GFS
+get_gfs(domain, TIFpath2, stdt2, eddt2)
 
 
 # In[22]:
 
 
 # fill in missing time slices or throw error if missing >4 slices
-missing_slice_check(stdt, eddt, TIFpath)
+#missing_slice_check(stdt, eddt, TIFpath)
 
 
 # In[26]:
 
 
 # build SnowModel met file
-MET2SM(TIFpath, OUTpath, stdt, eddt)
+#MET2SM(TIFpath, OUTpath, stdt, eddt)
 
 
 # In[30]:
 
 
 # delete directory with tif files 
-get_ipython().system('rm -rf $TIFpath')
+#get_ipython().system('rm -rf $TIFpath')
 

@@ -179,7 +179,7 @@ def get_snotel_data(gdf,sddt, eddt,var,units='metric'):
                     print('More than 2% of days missing')
                     gdf.drop(gdf.loc[gdf['code']==sitecode].index, inplace=True)
                     continue
-            stn_data[sitecode] = data.value
+            stn_data[sitecode] = [data.value]
         except:
             gdf.drop(gdf.loc[gdf['code']==sitecode].index, inplace=True)     
     
