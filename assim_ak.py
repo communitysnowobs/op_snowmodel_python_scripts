@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-
-
 import geopandas as gpd
 import pandas as pd
 import numpy as np
@@ -14,23 +12,16 @@ from shapely import geometry as sgeom
 import ulmo
 from collections import OrderedDict
 
-
 #########################################################################
 ############################ USER INPUTS ################################
 #########################################################################
 # NOTE: to runn assim, set irun_data_assim = 1 in .par file
 
-
+# test change to see if we can cut latency by a day. 11/23/2022
 # DOMAIN
 # choose the modeling domain
 domain = 'CHU'
 
-# PATHS
-dataPath = '/nfs/attic/dfh/Aragon2/CSOdmn/'+domain+'/'
-#path to dem .tif
-dem_path = dataPath + 'DEM_'+domain+'.tif'
-#path to landcover .tif
-lc_path = dataPath + 'NLCD2016_'+domain+'.tif'
 #path to SnowModel
 SMpath = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/ak_snowmodel/'
 
@@ -53,19 +44,22 @@ def set_dates(st_dt,ed_dt,date_flag):
     if date_flag == 'auto':
         # ###automatically select date based on today's date 
         hoy = date.today()
-        antes = timedelta(days = 2)
-        #end date 3 days before today's date
-        fecha = hoy - antes
+        antes = timedelta(days = 1)
+        #end date 1 day after today's date
+        fecha = hoy + antes
         eddt = fecha.strftime("%Y-%m-%d")  
         #whole water year
-        if (hoy.month == 10) & (hoy.day == 2):
+        #change the 3 to 2? 11/23/2022
+        if (hoy.month == 10) & (hoy.day <= 2):
             eddt = fecha.strftime("%Y-%m-%d")
             stdt = str(hoy.year - 1)+'-10-01'
         #start dates
         elif fecha.month <10:
             stdt = str(fecha.year - 1)+'-10-01'
+            #stdt='2023-02-20' #temp addition (Feb 16 2023). Delete when done testing
         else:
             stdt = str(fecha.year)+'-10-01'
+            #stdt='2023-02-20' #temp addition (Feb 16 2023). Delete when done testing
     elif date_flag == 'manual':
         stdt = st_dt
         eddt = ed_dt 
@@ -85,7 +79,7 @@ def swe_calc(gdf):
     TD = np.array([point_query([val], '/nfs/attic/dfh/data/depth2swe/td_final.txt')[0] for val in gdf.geometry])
     #Get pr info at each point
     PPTWT = np.array([point_query([val], '/nfs/attic/dfh/data/depth2swe/ppt_wt_final.txt')[0] for val in gdf.geometry])
-    
+
     #lines 90 - 97 added Sep 2022 by Aragon in order to screen out invalid points
     # remove records with no climtaological data 
     print(sum(np.isnan(TD.astype(float))), 'cso point(s) do not have climatological data to calculate swe')
@@ -95,8 +89,8 @@ def swe_calc(gdf):
     H = H[~np.isnan(TD.astype(float))]
     PPTWT = PPTWT[~np.isnan(TD.astype(float))]
     TD = TD[~np.isnan(TD.astype(float))]
-    #lines 90 - 97 added Sep 2022 by Aragon in order to screen out invalid points
-    
+    #lines 90 - 97 added Sep 2022 by Aragon in order to screen out invalid points   
+   
     #Determine day of year
     dates = pd.to_datetime(gdf.timestamp, format='%Y-%m-%dT%H:%M:%S').dt.date.values
     DOY = [date.toordinal(date(dts.year,dts.month,dts.day))-date.toordinal(date(dts.year,9,30)) for dts in dates]
@@ -140,7 +134,7 @@ def get_cso(st, ed, domain):
       "limit": 5000,
     }
 
-    csodata_resp = requests.get("https://api.communitysnowobs.org/observations", params=params)
+    csodata_resp = requests.get("http://api.communitysnowobs.org/observations", params=params)
     csodatajson = csodata_resp.json()
     #turn into geodataframe
     gdf = gpd.GeoDataFrame.from_features(csodatajson, crs=stn_proj)
@@ -576,13 +570,13 @@ elif assim_mod == 'both':
     # set delta time 
     delta = 5
     if len(CSOgdf)>=1:
-        
+    
         #comment out call to qaqc and just use data as is since snodas does not work in AK
         #change as per Aragon suggestion Sep 2022
         #CSOgdf_clean = qaqc_iqr(CSOgdf)
         CSOgdf_clean = CSOgdf
         #end change
- 
+    
         CSOdata = CSOgdf_clean.sort_values(by='dt',ascending=True)
         CSOdata = CSOdata.reset_index(drop=True)
         newCSO = CSOdata

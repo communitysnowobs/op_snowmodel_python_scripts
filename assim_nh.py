@@ -20,10 +20,10 @@ from collections import OrderedDict
 # test change to see if we can cut latency by a day. 11/23/2022
 # DOMAIN
 # choose the modeling domain
-domain = 'ST'
+domain = 'NH'
 
 #path to SnowModel
-SMpath = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/st_snowmodel/'
+SMpath = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/nh_snowmodel/'
 
 # TIME
 # choose if want to set 'manual' or 'auto' date 
@@ -35,7 +35,7 @@ ed_dt = '2019-01-05'
 # ASSIM OPTIONS
 # select the data source to be assimilated
 # can be set to 'none','cso', 'both' or 'snotel'
-assim_mod = 'both'
+assim_mod = 'none'
 print(assim_mod)
 #########################################################################
 

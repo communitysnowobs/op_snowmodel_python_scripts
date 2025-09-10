@@ -21,15 +21,15 @@ ee.Initialize(project='sunny-emissary-318920')
 #########################################################################
 # PATHS
 # path to temporary folder to store tif files from gee
-TIFpath = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/get_met_data/GEE_Downloads_st/'
+TIFpath = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/get_met_data/GEE_Downloads_nh/'
 # path to temporary folder to store tif files from gee gfs
-TIFpath2 = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/get_met_data/GEE_Downloads_st_gfs/'
+TIFpath2 = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/get_met_data/GEE_Downloads_nh_gfs/'
 # path to where you want your output met .dat fime
-OUTpath = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/st_snowmodel/met/mm_st.dat'
+OUTpath = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/nh_snowmodel/met/mm_nh.dat'
 
 # DOMAIN
 # choose the modeling domain
-domain = 'ST'
+domain = 'NH'
 
 # TIME
 # choose if want to set 'manual' or 'auto' date 

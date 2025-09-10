@@ -14,31 +14,31 @@ from datetime import datetime, timedelta, date
 import contextlib
 
 # Initialize the Earth Engine module
-ee.Initialize(project='sunny-emissary-318920')
+ee.Initialize()
 
 #########################################################################
 ############################ USER INPUTS ################################
 #########################################################################
 # PATHS
 # path to temporary folder to store tif files from gee
-TIFpath = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/get_met_data/GEE_Downloads_st/'
+TIFpath = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/get_met_data/GEE_Downloads_goa/'
 # path to temporary folder to store tif files from gee gfs
-TIFpath2 = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/get_met_data/GEE_Downloads_st_gfs/'
+TIFpath2 = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/get_met_data/GEE_Downloads_goa_gfs/'
 # path to where you want your output met .dat fime
-OUTpath = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/st_snowmodel/met/mm_st.dat'
+OUTpath = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/mm_goa.dat'
 
 # DOMAIN
 # choose the modeling domain
-domain = 'ST'
+domain = 'GOA'
 
 # TIME
 # choose if want to set 'manual' or 'auto' date 
-date_flag = 'auto'
+date_flag = 'manual'
 # If you choose 'manual' set your dates below  
 # This will start on the 'begin' date at 0:00 and the last iteration will 
 # be on the day before the 'end' date below.
-st_dt = '2020-10-01'
-ed_dt = '2020-10-15'
+st_dt = '2021-09-01'
+ed_dt = '2023-09-01'
 #########################################################################
 
 #########################################################################

@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-
-
 import geopandas as gpd
 import pandas as pd
 import numpy as np
@@ -14,23 +12,16 @@ from shapely import geometry as sgeom
 import ulmo
 from collections import OrderedDict
 
-
 #########################################################################
 ############################ USER INPUTS ################################
 #########################################################################
 # NOTE: to runn assim, set irun_data_assim = 1 in .par file
 
-
+# test change to see if we can cut latency by a day. 11/23/2022
 # DOMAIN
 # choose the modeling domain
 domain = 'WA'
 
-# PATHS
-dataPath = '/nfs/attic/dfh/Aragon2/CSOdmn/'+domain+'/'
-#path to dem .tif
-dem_path = dataPath + 'DEM_'+domain+'.tif'
-#path to landcover .tif
-lc_path = dataPath + 'NLCD2016_'+domain+'.tif'
 #path to SnowModel
 SMpath = '/nfs/depot/cce_u1/hill/dfh/op_snowmodel/wa_ne_snowmodel/'
 
@@ -53,19 +44,22 @@ def set_dates(st_dt,ed_dt,date_flag):
     if date_flag == 'auto':
         # ###automatically select date based on today's date 
         hoy = date.today()
-        antes = timedelta(days = 2)
-        #end date 3 days before today's date
-        fecha = hoy - antes
+        antes = timedelta(days = 1)
+        #end date 1 day after today's date
+        fecha = hoy + antes
         eddt = fecha.strftime("%Y-%m-%d")  
         #whole water year
-        if (hoy.month == 10) & (hoy.day == 2):
+        #change the 3 to 2? 11/23/2022
+        if (hoy.month == 10) & (hoy.day <= 2):
             eddt = fecha.strftime("%Y-%m-%d")
             stdt = str(hoy.year - 1)+'-10-01'
         #start dates
         elif fecha.month <10:
             stdt = str(fecha.year - 1)+'-10-01'
+            #stdt='2023-02-20' #temp addition (Feb 16 2023). Delete when done testing
         else:
             stdt = str(fecha.year)+'-10-01'
+            #stdt='2023-02-20' #temp addition (Feb 16 2023). Delete when done testing
     elif date_flag == 'manual':
         stdt = st_dt
         eddt = ed_dt 
@@ -128,7 +122,7 @@ def get_cso(st, ed, domain):
       "limit": 5000,
     }
 
-    csodata_resp = requests.get("https://api.communitysnowobs.org/observations", params=params)
+    csodata_resp = requests.get("http://api.communitysnowobs.org/observations", params=params)
     csodatajson = csodata_resp.json()
     #turn into geodataframe
     gdf = gpd.GeoDataFrame.from_features(csodatajson, crs=stn_proj)
